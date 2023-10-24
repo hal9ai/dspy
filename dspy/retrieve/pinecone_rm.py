@@ -152,7 +152,8 @@ class PineconeRM(dspy.Retrieve):
                 results_dict["matches"], key=lambda x: x["score"], reverse=True
             )
             passages = [result["metadata"]["text"] for result in sorted_results]
-            return dspy.Prediction(passages=passages)
+            # return dspy.Prediction(passages=passages)
+            return dspy.Prediction(sorted_results)
 
         # For multiple queries, query each and return the highest scoring passages
         # If a passage is returned multiple times, the score is accumulated. For this reason we increase top_k by 3x
