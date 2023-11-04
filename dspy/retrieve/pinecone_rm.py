@@ -124,7 +124,7 @@ class PineconeRM(dspy.Retrieve):
         )
         return [embedding["embedding"] for embedding in embedding["data"]]
 
-    def forward(self, query_or_queries: Union[str, List[str]]) -> dspy.Prediction:
+    def forward(self, query_or_queries: Union[str, List[str]], filter=None) -> dspy.Prediction:
         """Search with pinecone for self.k top passages for query
 
         Args:
@@ -144,16 +144,17 @@ class PineconeRM(dspy.Retrieve):
         # For single query, just look up the top k passages
         if len(queries) == 1:
             results_dict = self._pinecone_index.query(
-                embeddings[0], top_k=self.k, include_metadata=True
+                embeddings[0], top_k=self.k, include_metadata=True, filter=filter 
             )
 
             # Sort results by score
             sorted_results = sorted(
                 results_dict["matches"], key=lambda x: x["score"], reverse=True
             )
+            # print(sorted_results)
             passages = [result["metadata"]["text"] for result in sorted_results]
             # return dspy.Prediction(passages=passages)
-            return dspy.Prediction(sorted_results)
+            return dspy.Prediction(results=sorted_results)
 
         # For multiple queries, query each and return the highest scoring passages
         # If a passage is returned multiple times, the score is accumulated. For this reason we increase top_k by 3x
