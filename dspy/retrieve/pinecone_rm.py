@@ -54,8 +54,9 @@ class PineconeRM(dspy.Retrieve):
 
     def __init__(
         self,
-        collection_name: str,
-        persist_directory: str,
+        pinecone_index_name: str,
+        pinecone_api_key: Optional[str] = None,
+        pinecone_env: Optional[str] = None,
         openai_embed_model: str = "text-embedding-ada-002",
         openai_api_provider: Optional[str] = None,
         openai_api_key: Optional[str] = None,
