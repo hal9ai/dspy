@@ -127,9 +127,23 @@ class PineconeRM(dspy.Retrieve):
         Returns:
             List[List[float]]: List of embeddings corresponding to each query.
         """
-        embedding = openai.Embedding.create(
-            input=queries, model=self._openai_embed_model
-        )
+        if self._openai_api_provider == "azure":
+            model_args = {
+                "engine": self._openai_embed_model,
+                "deployment_id": self._openai_embed_model,
+                "api_version": openai.api_version,
+                "api_base": openai.api_base,
+            }
+            embedding = openai.Embedding.create(
+                input=queries,
+                model=self._openai_embed_model,
+                **model_args,
+                api_provider=self._openai_api_provider
+            )
+        else:
+            embedding = openai.Embedding.create(
+                input=queries, model=self._openai_embed_model
+            )
         return [embedding["embedding"] for embedding in embedding["data"]]
 
     def forward(self, query_or_queries: Union[str, List[str]], filter=None) -> dspy.Prediction:
