@@ -54,24 +54,32 @@ class PineconeRM(dspy.Retrieve):
 
     def __init__(
         self,
-        pinecone_index_name: str,
-        pinecone_api_key: Optional[str] = None,
-        pinecone_env: Optional[str] = None,
+        collection_name: str,
+        persist_directory: str,
         openai_embed_model: str = "text-embedding-ada-002",
+        openai_api_provider: Optional[str] = None,
         openai_api_key: Optional[str] = None,
-        openai_org: Optional[str] = None,
-        k: int = 3,
+        openai_api_type: Optional[str] = None,
+        openai_api_base: Optional[str] = None,
+        openai_api_version: Optional[str] = None,
+        k: int = 7,
     ):
         self._openai_embed_model = openai_embed_model
+
         self._pinecone_index = self._init_pinecone(
             pinecone_index_name, pinecone_api_key, pinecone_env
         )
-
-        # If not provided, defaults to env vars OPENAI_API_KEY and OPENAI_ORGANIZATION
+        # If not provided, defaults to env vars
         if openai_api_key:
             openai.api_key = openai_api_key
-        if openai_org:
-            openai.organization = openai_org
+        if openai_api_type:
+            openai.api_type = openai_api_type
+        if openai_api_base:
+            openai.api_base = openai_api_base
+        if openai_api_version:
+            openai.api_version = openai_api_version
+        if openai_api_provider:
+            self._openai_api_provider = openai_api_provider
 
         super().__init__(k=k)
 
