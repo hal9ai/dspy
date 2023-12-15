@@ -30,7 +30,7 @@ local/
 local_*
 build/
 *.egg-info/
-.mypy_chache
+.mypy_chache/
 # *.jsonl
 # *.json
 !/data/*.json
