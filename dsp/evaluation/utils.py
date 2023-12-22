@@ -1,5 +1,5 @@
-from openai import InvalidRequestError
-from openai.error import APIError
+from openai import UnprocessableEntityError
+from openai import APIError
 
 import dsp
 import tqdm

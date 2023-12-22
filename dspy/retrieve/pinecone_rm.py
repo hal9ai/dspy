@@ -55,14 +55,11 @@ class PineconeRM(dspy.Retrieve):
     def __init__(
         self,
         pinecone_index_name: str,
+        client: openai.OpenAI| openai.AzureOpenAI,
+        openai_embed_model: str = 'ada-embedding-002',
         pinecone_api_key: Optional[str] = None,
         pinecone_env: Optional[str] = None,
-        openai_embed_model: str = "text-embedding-ada-002",
-        openai_api_provider: Optional[str] = None,
-        openai_api_key: Optional[str] = None,
-        openai_api_type: Optional[str] = None,
-        openai_api_base: Optional[str] = None,
-        openai_api_version: Optional[str] = None,
+        
         k: int = 7,
     ):
         self._openai_embed_model = openai_embed_model
@@ -70,18 +67,7 @@ class PineconeRM(dspy.Retrieve):
         self._pinecone_index = self._init_pinecone(
             pinecone_index_name, pinecone_api_key, pinecone_env
         )
-        # If not provided, defaults to env vars
-        if openai_api_key:
-            openai.api_key = openai_api_key
-        if openai_api_type:
-            openai.api_type = openai_api_type
-        if openai_api_base:
-            openai.api_base = openai_api_base
-        if openai_api_version:
-            openai.api_version = openai_api_version
-        if openai_api_provider:
-            self._openai_api_provider = openai_api_provider
-
+        self.client = client
         super().__init__(k=k)
 
     def _init_pinecone(
@@ -116,7 +102,7 @@ class PineconeRM(dspy.Retrieve):
 
     @backoff.on_exception(
         backoff.expo,
-        (openai.error.RateLimitError, openai.error.ServiceUnavailableError),
+        (openai.RateLimitError, openai.InternalServerError, openai.APIError),
         max_time=15,
     )
     def _get_embeddings(self, queries: List[str]) -> List[List[float]]:
@@ -128,24 +114,11 @@ class PineconeRM(dspy.Retrieve):
         Returns:
             List[List[float]]: List of embeddings corresponding to each query.
         """
-        if self._openai_api_provider == "azure":
-            model_args = {
-                "engine": self._openai_embed_model,
-                "deployment_id": self._openai_embed_model,
-                "api_version": openai.api_version,
-                "api_base": openai.api_base,
-            }
-            embedding = openai.Embedding.create(
-                input=queries,
-                model=self._openai_embed_model,
-                **model_args,
-                api_provider=self._openai_api_provider
+        embedding = self.client.embeddings.create(
+            input=queries,
+            model=self._openai_embed_model,
             )
-        else:
-            embedding = openai.Embedding.create(
-                input=queries, model=self._openai_embed_model
-            )
-        return [embedding["embedding"] for embedding in embedding["data"]]
+        return [embedding.embedding for embedding in embedding.data]
 
     def forward(self, query_or_queries: Union[str, List[str]], filter=None) -> dspy.Prediction:
         """Search with pinecone for self.k top passages for query
@@ -181,7 +154,7 @@ class PineconeRM(dspy.Retrieve):
 
         # For multiple queries, query each and return the highest scoring passages
         # If a passage is returned multiple times, the score is accumulated. For this reason we increase top_k by 3x
-        passage_scores = {}
+        passage_scores:dict = {}
         for embedding in embeddings:
             results_dict = self._pinecone_index.query(
                 embedding, top_k=self.k * 3, include_metadata=True
