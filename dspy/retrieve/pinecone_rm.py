@@ -55,7 +55,7 @@ class PineconeRM(dspy.Retrieve):
     def __init__(
         self,
         pinecone_index_name: str,
-        client: openai.OpenAI| openai.AzureOpenAI,
+        client: openai.OpenAI| openai.AzureOpenAI = openai.OpenAI,
         openai_embed_model: str = 'ada-embedding-002',
         pinecone_api_key: Optional[str] = None,
         pinecone_env: Optional[str] = None,
