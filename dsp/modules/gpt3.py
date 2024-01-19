@@ -183,7 +183,11 @@ class GPT3(LM):
 
 @CacheMemory.cache
 def cached_gpt3_request_v2(**kwargs):
-    return openai.Completion.create(**kwargs)
+    print(', '.join(['{}={!r}'.format(k, v) for k, v in kwargs.items()]))
+    result = openai.Completion.create(**kwargs)
+    print(', '.join(['{}={!r}'.format(k, v) for k, v in result.items()]))
+
+    return result
 
 
 @functools.lru_cache(maxsize=None if cache_turn_on else 0)
@@ -199,7 +203,11 @@ cached_gpt3_request = cached_gpt3_request_v2_wrapped
 def _cached_gpt3_turbo_request_v2(**kwargs) -> OpenAIObject:
     if "stringify_request" in kwargs:
         kwargs = json.loads(kwargs["stringify_request"])
-    return cast(OpenAIObject, openai.ChatCompletion.create(**kwargs))
+    print(', '.join(['{}={!r}'.format(k, v) for k, v in kwargs.items()]))
+    result = cast(OpenAIObject, openai.ChatCompletion.create(**kwargs))
+    print(', '.join(['{}={!r}'.format(k, v) for k, v in result.items()]))
+
+    return result
 
 
 @functools.lru_cache(maxsize=None if cache_turn_on else 0)
